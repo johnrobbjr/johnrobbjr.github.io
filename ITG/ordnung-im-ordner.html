@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ordnung im Ordner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #EFF3F1;
+    --surface: #FFFFFF;
+    --ink: #22302B;
+    --ink-soft: #5B6B63;
+    --accent: #3B6E62;
+    --accent-dark: #2A544A;
+    --accent-light: #DCEAE3;
+    --gold: #E3A857;
+    --gold-dark: #C88C3B;
+    --error: #C1523D;
+    --error-light: #F5DFDA;
+    --border: #D8DED9;
+    --paper-fold: #EDEAE0;
+    --radius-pill: 999px;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 90% 0%, rgba(227,168,87,0.10), transparent 45%),
+      radial-gradient(circle at 5% 95%, rgba(59,110,98,0.08), transparent 40%);
+    background-attachment: fixed;
+    color: var(--ink);
+    font-family: 'Karla', sans-serif;
+    min-height: 100vh;
+  }
+
+  h1,h2,h3, .display, button, .btn{
+    font-family: 'Fredoka', sans-serif;
+  }
+
+  button{ font-family: inherit; cursor: pointer; }
+  button:focus-visible, .crumb:focus-visible, .icon-btn:focus-visible{
+    outline: 3px solid var(--gold);
+    outline-offset: 2px;
+  }
+
+  #app{
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 28px 20px 60px;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .brand{
+    display:flex;
+    align-items:baseline;
+    gap: 10px;
+  }
+  .brand h1{
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin:0;
+    color: var(--accent-dark);
+    letter-spacing: 0.2px;
+  }
+  .brand .tag{
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    font-family:'Karla', sans-serif;
+  }
+  .menu-link{
+    background:none;
+    border:none;
+    color: var(--ink-soft);
+    font-size:0.85rem;
+    font-family:'Karla', sans-serif;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    padding: 4px 2px;
+  }
+  .menu-link:hover{ color: var(--accent-dark); }
+
+  /* ---------- Start screen ---------- */
+  .hero{
+    text-align:center;
+    margin: 30px 0 40px;
+  }
+  .hero h2{
+    font-size: 2rem;
+    margin: 0 0 10px;
+    color: var(--ink);
+  }
+  .hero p{
+    color: var(--ink-soft);
+    font-size: 1.05rem;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .mode-grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 30px;
+  }
+  @media (max-width:900px){ .mode-grid{ grid-template-columns: 1fr 1fr; } }
+  @media (max-width:640px){ .mode-grid{ grid-template-columns: 1fr; } }
+
+  .mode-card{
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 22px;
+    padding: 26px 22px;
+    text-align:left;
+    display:flex;
+    flex-direction:column;
+    gap: 10px;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .mode-card:hover{
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .mode-card svg{ width:52px; height:52px; }
+  .mode-card h3{
+    margin:0;
+    font-size: 1.25rem;
+    color: var(--accent-dark);
+  }
+  .mode-card p{
+    margin:0;
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+    line-height:1.45;
+  }
+  .mode-card .go{
+    margin-top: 8px;
+    align-self:flex-start;
+    background: var(--accent);
+    color:#fff;
+    border:none;
+    border-radius: var(--radius-pill);
+    padding: 9px 20px;
+    font-size:0.95rem;
+    font-weight:600;
+  }
+  .mode-card .go:hover{ background: var(--accent-dark); }
+
+  /* ---------- Progress ---------- */
+  .progress-row{
+    display:flex;
+    align-items:center;
+    gap: 14px;
+    margin-bottom: 6px;
+  }
+  .progress-label{
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    white-space: nowrap;
+    font-family:'Karla', sans-serif;
+  }
+  .progress-track{
+    flex:1;
+    height: 8px;
+    background: var(--border);
+    border-radius: var(--radius-pill);
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    background: var(--gold);
+    border-radius: var(--radius-pill);
+    transition: width 0.35s ease;
+  }
+
+  /* ---------- Instruction banner ---------- */
+  .instruction{
+    background: var(--accent-light);
+    border-radius: 16px;
+    padding: 14px 18px;
+    margin: 16px 0 22px;
+    color: var(--accent-dark);
+    font-size: 0.98rem;
+    font-weight: 500;
+  }
+
+  .panel{
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 22px;
+    padding: 24px;
+  }
+
+  .panel-actions{
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    margin-top: 20px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .btn{
+    border:none;
+    border-radius: var(--radius-pill);
+    padding: 10px 22px;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+  .btn-ghost{
+    background: transparent;
+    color: var(--ink-soft);
+    border: 1.5px solid var(--border);
+  }
+  .btn-ghost:hover{ border-color: var(--ink-soft); color: var(--ink); }
+  .btn-primary{
+    background: var(--gold);
+    color: #4A3110;
+  }
+  .btn-primary:hover{ background: var(--gold-dark); }
+  .btn-primary:disabled{
+    background: var(--border);
+    color: var(--ink-soft);
+    cursor: not-allowed;
+  }
+
+  /* ---------- Folder-Sort ---------- */
+  .tray{
+    display:flex;
+    flex-wrap:wrap;
+    gap: 12px;
+    min-height: 78px;
+    padding: 14px;
+    background: var(--bg);
+    border-radius: 16px;
+    margin-bottom: 22px;
+  }
+  .tray-empty-msg{
+    color: var(--ink-soft);
+    font-size: 0.88rem;
+    font-style: italic;
+    margin: auto;
+  }
+
+  .item-chip{
+    display:flex;
+    align-items:center;
+    gap: 7px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-pill);
+    padding: 7px 14px 7px 8px;
+    cursor: grab;
+    user-select:none;
+    font-weight: 600;
+    font-family:'Karla', sans-serif;
+    font-size: 0.92rem;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+  }
+  .item-chip:active{ cursor: grabbing; }
+  .item-chip.wrong{ border-color: var(--error); background: var(--error-light); color: var(--error); }
+  .item-chip svg{ width: 26px; height: 20px; flex-shrink:0; }
+
+  .zones{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 16px;
+  }
+
+  .zone{
+    border: 2px dashed var(--border);
+    border-radius: 18px;
+    padding: 14px;
+    min-height: 130px;
+    background: rgba(255,255,255,0.5);
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .zone.dragover{
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+  .zone.reject{
+    border-color: var(--error);
+    background: var(--error-light);
+  }
+  .zone-head{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom: 10px;
+  }
+  .zone-head svg{ width:30px; height:23px; }
+  .zone-head .zname{
+    font-weight: 700;
+    color: var(--accent-dark);
+    font-size: 1rem;
+  }
+  .zone-head .zcount{
+    margin-left:auto;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    background: var(--surface);
+    border-radius: var(--radius-pill);
+    padding: 2px 9px;
+    font-family:'Karla', sans-serif;
+  }
+  .zone-items{
+    display:flex;
+    flex-wrap:wrap;
+    gap: 8px;
+  }
+  .zone-items .item-chip{
+    cursor: default;
+    background: var(--accent-light);
+    border-color: var(--accent);
+  }
+
+  /* ---------- Find the File ---------- */
+  .mission{
+    display:flex;
+    align-items:flex-start;
+    gap: 10px;
+    background: var(--accent-light);
+    border-radius: 16px;
+    padding: 14px 18px;
+    margin: 16px 0 20px;
+  }
+  .mission svg{ width:22px; height:22px; flex-shrink:0; margin-top:2px; }
+  .mission-text{ font-size: 0.95rem; color: var(--accent-dark); }
+  .mission-text b{ font-weight:700; }
+  .mission-path{
+    font-family:'Karla', sans-serif;
+    font-weight: 700;
+    color: var(--accent-dark);
+    word-break: break-word;
+  }
+
+  .breadcrumbs{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap: 4px;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+  }
+  .crumb{
+    background:none;
+    border:none;
+    color: var(--ink-soft);
+    font-family:'Karla', sans-serif;
+    font-weight:600;
+    padding: 4px 6px;
+    border-radius: 8px;
+  }
+  .crumb:hover{ background: var(--bg); color: var(--ink); }
+  .crumb.current{ color: var(--accent-dark); }
+  .crumb-sep{ color: var(--border); }
+
+  .browser{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+    gap: 14px;
+    min-height: 160px;
+  }
+  .fs-item{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    background:none;
+    border: 1.5px solid transparent;
+    border-radius: 14px;
+    padding: 10px 6px;
+    text-align:center;
+  }
+  .fs-item:hover{ background: var(--bg); border-color: var(--border); }
+  .fs-item svg{ width:44px; height:34px; }
+  .fs-item.file svg{ width:32px; height:40px; }
+  .fs-item .fname{
+    font-size: 0.8rem;
+    font-weight:600;
+    color: var(--ink);
+    line-height:1.25;
+    word-break: break-word;
+  }
+
+  .wrong-msg{
+    margin-top: 6px;
+    color: var(--error);
+    font-size: 0.85rem;
+    font-weight:600;
+    min-height: 1.2em;
+  }
+
+  /* ---------- Baum bauen ---------- */
+  .build-tray{
+    display:flex;
+    flex-wrap:wrap;
+    gap: 10px;
+    min-height: 66px;
+    padding: 14px;
+    background: var(--bg);
+    border-radius: 16px;
+    margin-bottom: 22px;
+  }
+  .build-tray.dragover{ background: var(--accent-light); }
+
+  .tree-area{
+    border: 1.5px dashed var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    min-height: 160px;
+  }
+  .root-box{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-weight:700;
+    color: var(--accent-dark);
+    margin-bottom: 10px;
+    font-size: 1.02rem;
+  }
+  .root-box svg{ width:30px; height:23px; }
+  .tree-children{
+    display:flex;
+    flex-direction:column;
+    gap: 8px;
+    padding-left: 20px;
+    min-height: 14px;
+  }
+  .tree-children.root-children{ padding-left: 4px; }
+
+  .tree-file{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 6px 12px;
+    width: fit-content;
+    cursor: grab;
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+  .tree-file svg{ width:20px; height:24px; }
+  .tree-file.wrong{ border-color: var(--error); background: var(--error-light); color: var(--error); }
+
+  .tree-folder{
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    background: rgba(255,255,255,0.6);
+    padding: 8px 10px 10px;
+  }
+  .tree-folder.wrong > .tree-folder-header{ color: var(--error); }
+  .tree-folder.wrong{ border-color: var(--error); background: var(--error-light); }
+  .tree-folder.dragover{ border-color: var(--accent); background: var(--accent-light); }
+  .tree-folder-header{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    cursor: grab;
+    font-weight:700;
+    font-size: 0.92rem;
+    color: var(--accent-dark);
+  }
+  .tree-folder-header svg{ width:26px; height:20px; }
+
+  .check-msg{
+    margin-top: 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+  .check-msg.ok{ color: var(--accent-dark); }
+  .check-msg.bad{ color: var(--error); }
+
+  /* ---------- Win screens ---------- */
+  .win-screen{
+    text-align:center;
+    padding: 50px 20px;
+  }
+  .win-screen .badge{
+    width:74px; height:74px;
+    margin: 0 auto 18px;
+    background: var(--gold);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .win-screen .badge svg{ width:38px; height:38px; }
+  .win-screen h2{ margin: 0 0 8px; font-size:1.6rem; color: var(--accent-dark); }
+  .win-screen p{ color: var(--ink-soft); margin: 0 0 24px; }
+
+  .level-complete-pop{
+    text-align:center;
+    padding: 6px 0 2px;
+  }
+
+  .footer-note{
+    text-align:center;
+    color: var(--ink-soft);
+    font-size: 0.78rem;
+    margin-top: 36px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ============ ICONS ============ */
+function folderIcon(fill){
+  fill = fill || 'var(--accent)';
+  return `<svg viewBox="0 0 48 36" xmlns="http://www.w3.org/2000/svg">
+    <path d="M3 7 C3 5 4.5 3.5 6.5 3.5 H18 L22 7.5 H41.5 C43.5 7.5 45 9 45 11 V29 C45 31 43.5 32.5 41.5 32.5 H6.5 C4.5 32.5 3 31 3 29 Z"
+      fill="${fill}" stroke="var(--accent-dark)" stroke-width="1.4" stroke-linejoin="round"/>
+  </svg>`;
+}
+function fileIcon(){
+  return `<svg viewBox="0 0 36 44" xmlns="http://www.w3.org/2000/svg">
+    <path d="M4 2 H21 L32 13 V42 H4 Z" fill="#FFFFFF" stroke="var(--ink)" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M21 2 V13 H32 Z" fill="var(--paper-fold)" stroke="var(--ink)" stroke-width="1.2" stroke-linejoin="round"/>
+    <line x1="9" y1="21" x2="27" y2="21" stroke="var(--ink-soft)" stroke-width="1.3"/>
+    <line x1="9" y1="27" x2="27" y2="27" stroke="var(--ink-soft)" stroke-width="1.3"/>
+    <line x1="9" y1="33" x2="21" y2="33" stroke="var(--ink-soft)" stroke-width="1.3"/>
+  </svg>`;
+}
+function searchIcon(){
+  return `<svg viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="22" cy="22" r="15" fill="none" stroke="var(--accent)" stroke-width="4"/>
+    <line x1="33" y1="33" x2="46" y2="46" stroke="var(--accent)" stroke-width="4.5" stroke-linecap="round"/>
+  </svg>`;
+}
+function sortIcon(){
+  return folderIcon('var(--gold)');
+}
+function checkIcon(){
+  return `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M4 13 L9.5 18.5 L20 6" stroke="#4A3110" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+function treeIcon(){
+  return `<svg viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
+    <path d="M4 6 C4 4.7 5 3.7 6.3 3.7 H13 L15 6 H24 C25.3 6 26.3 7 26.3 8.3 V17 C26.3 18.3 25.3 19.3 24 19.3 H6.3 C5 19.3 4 18.3 4 17 Z"
+      fill="var(--accent)" stroke="var(--accent-dark)" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M15 19 V27 H40 V32" fill="none" stroke="var(--border)" stroke-width="2.2"/>
+    <path d="M15 19 V38 H23 V43" fill="none" stroke="var(--border)" stroke-width="2.2"/>
+    <path d="M28 32 C28 30.7 29 29.7 30.3 29.7 H35 L36.6 31.4 H43.7 C45 31.4 46 32.4 46 33.7 V40 C46 41.3 45 42.3 43.7 42.3 H30.3 C29 42.3 28 41.3 28 40 Z"
+      fill="var(--gold)" stroke="var(--gold-dark)" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M10 43 H36 V48 H10 Z" fill="#fff" stroke="var(--ink)" stroke-width="1.3"/>
+    <path d="M30 43 V48" stroke="var(--ink-soft)" stroke-width="1.1"/>
+  </svg>`;
+}
+function infoIcon(){
+  return `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="9" stroke="var(--accent)" stroke-width="2"/>
+    <line x1="12" y1="11" x2="12" y2="17" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="12" cy="7.3" r="1.3" fill="var(--accent)"/>
+  </svg>`;
+}
+
+/* ============ FOLDER-SORT LEVEL DATA ============ */
+const sortLevels = [
+  {
+    targets: [{id:'tiere', name:'Tiere'}],
+    items: [
+      {id:'hund', name:'Hund', target:'tiere'},
+      {id:'katze', name:'Katze', target:'tiere'}
+    ]
+  },
+  {
+    targets: [{id:'moebel', name:'Möbel'}, {id:'obst', name:'Obst'}],
+    items: [
+      {id:'stuhl', name:'Stuhl', target:'moebel'},
+      {id:'tisch', name:'Tisch', target:'moebel'},
+      {id:'apfel', name:'Apfel', target:'obst'},
+      {id:'banane', name:'Banane', target:'obst'}
+    ]
+  },
+  {
+    targets: [{id:'sport', name:'Sport'}, {id:'musik', name:'Musikinstrumente'}, {id:'kleidung', name:'Kleidung'}],
+    items: [
+      {id:'fussball', name:'Fußball', target:'sport'},
+      {id:'tennis', name:'Tennis', target:'sport'},
+      {id:'gitarre', name:'Gitarre', target:'musik'},
+      {id:'klavier', name:'Klavier', target:'musik'},
+      {id:'hose', name:'Hose', target:'kleidung'},
+      {id:'jacke', name:'Jacke', target:'kleidung'}
+    ]
+  },
+  {
+    targets: [{id:'fahrzeuge', name:'Fahrzeuge'}, {id:'gemuese', name:'Gemüse'}, {id:'faecher', name:'Schulfächer'}],
+    items: [
+      {id:'auto', name:'Auto', target:'fahrzeuge'},
+      {id:'fahrrad', name:'Fahrrad', target:'fahrzeuge'},
+      {id:'bus', name:'Bus', target:'fahrzeuge'},
+      {id:'karotte', name:'Karotte', target:'gemuese'},
+      {id:'kartoffel', name:'Kartoffel', target:'gemuese'},
+      {id:'mathe', name:'Mathe', target:'faecher'},
+      {id:'sportfach', name:'Sport', target:'faecher'},
+      {id:'kunst', name:'Kunst', target:'faecher'}
+    ]
+  },
+  {
+    targets: [{id:'getraenke', name:'Getränke'}, {id:'suess', name:'Süßigkeiten'}, {id:'technik', name:'Technik'}],
+    items: [
+      {id:'wasser', name:'Wasser', target:'getraenke'},
+      {id:'saft', name:'Saft', target:'getraenke'},
+      {id:'limo', name:'Limonade', target:'getraenke'},
+      {id:'schoko', name:'Schokolade', target:'suess'},
+      {id:'gummi', name:'Gummibärchen', target:'suess'},
+      {id:'kekse', name:'Kekse', target:'suess'},
+      {id:'handy', name:'Handy', target:'technik'},
+      {id:'laptop', name:'Laptop', target:'technik'},
+      {id:'kopfhoerer', name:'Kopfhörer', target:'technik'}
+    ]
+  }
+];
+
+/* ============ FIND-THE-FILE LEVEL DATA ============ */
+function F(name){ return {name, type:'file', target:false}; }
+function FT(name){ return {name, type:'file', target:true}; }
+function D(name, children){ return {name, type:'folder', children: children||[]}; }
+
+const findLevels = [
+  { // 1 - direct at root
+    pathDisplay: "Mein PC > Hausaufgaben.txt",
+    tree: D('Mein PC', [
+      D('Bilder', [F('Katze.jpg')]),
+      D('Downloads', [F('Elternbrief.pdf')]),
+      FT('Hausaufgaben.txt'),
+      F('Stundenplan.pdf')
+    ])
+  },
+  { // 2 - one level deep
+    pathDisplay: "Mein PC > Bilder > Urlaub.png",
+    tree: D('Mein PC', [
+      D('Schule', [F('Merkzettel.txt')]),
+      D('Bilder', [FT('Urlaub.png'), F('Geburtstag.jpg')]),
+      D('Musik', [F('Playlist.mp3')])
+    ])
+  },
+  { // 3 - one level deep, more siblings/choices
+    pathDisplay: "Mein PC > Downloads > Vertretungsplan.pdf",
+    tree: D('Mein PC', [
+      D('Schule', [F('Merkzettel.txt')]),
+      D('Bilder', [F('Katze.jpg')]),
+      D('Downloads', [FT('Vertretungsplan.pdf'), F('Elternbrief.pdf'), F('Foto.png'), F('Rechnung.pdf')]),
+      D('Musik', [F('Playlist.mp3')]),
+      D('Spiele', [F('Highscore.txt')])
+    ])
+  },
+  { // 4 - two levels deep
+    pathDisplay: "Mein PC > Schule > Deutsch > Gedichtanalyse.docx",
+    tree: D('Mein PC', [
+      D('Schule', [
+        D('Deutsch', [FT('Gedichtanalyse.docx'), F('Lesetagebuch.docx')]),
+        D('Mathe', [F('Uebung.pdf')]),
+        D('Sport', [F('Laufzettel.pdf')])
+      ]),
+      D('Bilder', [F('Katze.jpg')]),
+      D('Downloads', [F('Elternbrief.pdf')])
+    ])
+  },
+  { // 5 - three levels deep
+    pathDisplay: "Mein PC > Bilder > Urlaub > Strand > Sonnenuntergang.jpg",
+    tree: D('Mein PC', [
+      D('Schule', [F('Merkzettel.txt')]),
+      D('Bilder', [
+        D('Urlaub', [
+          D('Strand', [FT('Sonnenuntergang.jpg'), F('Muschel.jpg')]),
+          D('Berge', [F('Gipfel.jpg')])
+        ]),
+        D('Schulausflug', [F('Klassenfoto.jpg')]),
+        F('Haustier.jpg')
+      ]),
+      D('Downloads', [F('Elternbrief.pdf')])
+    ])
+  },
+  { // 6 - three levels deep, more siblings at each level
+    pathDisplay: "Mein PC > Schule > Erdkunde > Referate > Vulkane.pptx",
+    tree: D('Mein PC', [
+      D('Schule', [
+        D('Deutsch', [F('Lesetagebuch.docx')]),
+        D('Mathe', [F('Uebung.pdf')]),
+        D('Biologie', [F('Zellaufbau.pdf')]),
+        D('Erdkunde', [
+          D('Klimazonen', [F('Karte.pdf')]),
+          D('Referate', [FT('Vulkane.pptx'), F('Erdbeben.pptx'), F('Gletscher.pptx')])
+        ]),
+        D('Sport', [F('Laufzettel.pdf')])
+      ]),
+      D('Bilder', [F('Katze.jpg')]),
+      D('Downloads', [F('Elternbrief.pdf')]),
+      D('Spiele', [F('Highscore.txt')])
+    ])
+  },
+  { // 7 - four levels deep, one light lookalike decoy folder (final level)
+    pathDisplay: "Mein PC > Schule > Biologie > Klassenarbeiten > 2026 > Endnote.pdf",
+    tree: D('Mein PC', [
+      D('Schule', [
+        D('Biologie', [
+          D('Klassenarbeiten', [
+            D('2025', [F('Endnote.pdf')]),
+            D('2026', [FT('Endnote.pdf'), F('Berichtigung.pdf')])
+          ]),
+          F('Hefteintrag.docx')
+        ]),
+        D('Bio_Projekt', [
+          D('Klassenarbeiten', [F('Notiz.txt')])
+        ]),
+        D('Mathe', [F('Uebung.pdf')])
+      ]),
+      D('Bilder', [F('Katze.jpg')]),
+      D('Downloads', [F('Elternbrief.pdf')])
+    ])
+  }
+];
+
+/* ============ BAUM BAUEN LEVEL DATA ============ */
+function FN(name){ return {name, type:'file'}; }
+function FD(name, children){ return {name, type:'folder', children: children||[]}; }
+
+function flattenSpec(node, parentId, out){
+  node.children.forEach((child, i) => {
+    const id = child.name.replace(/[^a-zA-Z0-9]/g,'') + '_' + out.length;
+    out.push({id, name: child.name, type: child.type, correctParent: parentId});
+    if(child.type === 'folder'){
+      flattenSpec(child, id, out);
+    }
+  });
+  return out;
+}
+
+const buildSpecs = [
+  { children: [
+    FD('Tiere', [FN('Hund.txt'), FN('Katze.txt')]),
+    FD('Schule', [FN('Stundenplan.pdf')])
+  ]},
+  { children: [
+    FD('Bilder', [FN('Urlaub.jpg'), FN('Familie.jpg')]),
+    FD('Schule', [FN('Hausaufgaben.docx'), FN('Stundenplan.pdf')]),
+    FD('Musik', [FN('Playlist.mp3'), FN('Konzert.jpg')])
+  ]},
+  { children: [
+    FD('Schule', [
+      FD('Mathe', [FN('Uebung.pdf')]),
+      FD('Deutsch', [FN('Aufsatz.docx')])
+    ]),
+    FD('Bilder', [FN('Urlaub.jpg')])
+  ]},
+  { children: [
+    FD('Schule', [
+      FD('Mathe', [FN('Uebung.pdf'), FN('Klassenarbeit.pdf')]),
+      FD('Biologie', [FN('Zellaufbau.pdf')])
+    ]),
+    FD('Bilder', [
+      FD('Urlaub', [FN('Strand.jpg'), FN('Berge.jpg')]),
+      FN('Haustier.jpg')
+    ]),
+    FD('Downloads', [FN('Elternbrief.pdf')])
+  ]},
+  { children: [
+    FD('Schule', [
+      FD('Projekte', [
+        FD('Klasse7b', [FN('Praesentation.pptx'), FN('Notizen.txt')])
+      ]),
+      FD('Mathe', [FN('Uebung.pdf')])
+    ]),
+    FD('Bilder', [
+      FD('Urlaub', [
+        FD('Strand', [FN('Sonnenuntergang.jpg')])
+      ]),
+      FN('Familie.jpg')
+    ]),
+    FD('Downloads', [FN('Elternbrief.pdf')])
+  ]}
+];
+
+const buildLevels = buildSpecs.map(spec => flattenSpec(spec, 'root', []));
+
+/* ============ STATE ============ */
+let state = {
+  screen: 'start', // start | sort | sortWin | find | findWin | build | buildWin
+  sortLevelIndex: 0,
+  sortItems: [],      // working copy of current level items with 'placed' flag, shuffled
+  findLevelIndex: 0,
+  findNavStack: [],    // array of tree nodes, [0] is root
+  buildLevelIndex: 0,
+  buildItems: [],      // current level's items (id, name, type, correctParent)
+  buildPlacement: {},  // itemId -> 'unsorted' | 'root' | folderItemId
+  buildTrayOrder: [],  // shuffled id order for stable tray display
+  buildChecked: false  // whether "Überprüfen" has been pressed since last change
+};
+
+const app = document.getElementById('app');
+
+/* ============ HELPERS ============ */
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function topbarHTML(title, tag){
+  return `
+  <div class="topbar">
+    <div class="brand">
+      <h1>Ordnung im Ordner</h1>
+      <span class="tag">${tag || ''}</span>
+    </div>
+    ${state.screen !== 'start' ? `<button class="menu-link" data-action="menu">Zum Hauptmenü</button>` : ''}
+  </div>`;
+}
+
+function progressHTML(current, total){
+  const pct = Math.round((current/total)*100);
+  return `
+  <div class="progress-row">
+    <span class="progress-label">Level ${current} von ${total}</span>
+    <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+  </div>`;
+}
+
+/* ============ RENDER: START ============ */
+function renderStart(){
+  app.innerHTML = `
+    ${topbarHTML()}
+    <div class="hero">
+      <h2>Finde dich im Ordnersystem zurecht</h2>
+      <p>Übe, wie Ordner und Dateien sinnvoll sortiert werden – und wie man sie wiederfindet.</p>
+    </div>
+    <div class="mode-grid">
+      <div class="mode-card">
+        ${sortIcon()}
+        <h3>Ordner sortieren</h3>
+        <p>Ziehe lose Ordner an die richtige Stelle, bis alles in der passenden Kategorie liegt. 5 Level, wird nach und nach schwerer.</p>
+        <button class="go" data-action="start-sort">Spiel starten</button>
+      </div>
+      <div class="mode-card">
+        ${searchIcon()}
+        <h3>Datei finden</h3>
+        <p>Dir wird ein Dateipfad gezeigt. Klicke dich durch die Ordner, bis du die richtige Datei gefunden hast. 7 Level.</p>
+        <button class="go" data-action="start-find">Spiel starten</button>
+      </div>
+      <div class="mode-card">
+        ${treeIcon()}
+        <h3>Ordner-Baum bauen</h3>
+        <p>Du bekommst einen Haufen Ordner und Dateien. Baue daraus unter „Mein PC" eine sinnvolle Ordnerstruktur. 5 Level.</p>
+        <button class="go" data-action="start-build">Spiel starten</button>
+      </div>
+    </div>
+    <div class="footer-note">Ein Lernspiel zum Thema Ordnerstruktur</div>
+  `;
+}
+
+/* ============ FOLDER-SORT LOGIC ============ */
+function loadSortLevel(index){
+  state.sortLevelIndex = index;
+  const level = sortLevels[index];
+  state.sortItems = shuffle(level.items).map(it => ({...it, placed:false}));
+  state.screen = 'sort';
+  renderSort();
+}
+
+function renderSort(){
+  const idx = state.sortLevelIndex;
+  const level = sortLevels[idx];
+  const items = state.sortItems;
+  const allPlaced = items.every(it => it.placed);
+
+  const trayItems = items.filter(it => !it.placed);
+
+  app.innerHTML = `
+    ${topbarHTML()}
+    ${progressHTML(idx+1, sortLevels.length)}
+    <div class="instruction">
+      ${idx === 0 ? 'Ziehe jeden Ordner in den passenden Überordner.' : 'Ordne alle Ordner der richtigen Kategorie zu.'}
+    </div>
+    <div class="panel">
+      <div class="tray" id="tray">
+        ${trayItems.length ? trayItems.map(it => chipHTML(it)).join('') : '<span class="tray-empty-msg">Alle Ordner sind einsortiert. Klicke auf „Absenden“.</span>'}
+      </div>
+      <div class="zones">
+        ${level.targets.map(t => zoneHTML(t, items)).join('')}
+      </div>
+      <div class="panel-actions">
+        <button class="btn btn-ghost" data-action="restart-sort-level">Neu mischen</button>
+        <button class="btn btn-primary" data-action="submit-sort" ${allPlaced ? '' : 'disabled'}>Absenden</button>
+      </div>
+    </div>
+  `;
+  attachSortHandlers();
+}
+
+function chipHTML(item){
+  return `<div class="item-chip" draggable="true" data-id="${item.id}">${folderIcon('var(--gold)')}<span>${item.name}</span></div>`;
+}
+
+function zoneHTML(target, items){
+  const placedItems = items.filter(it => it.target === target.id && it.placed);
+  const totalForTarget = items.filter(it => it.target === target.id).length;
+  return `
+  <div class="zone" data-target="${target.id}">
+    <div class="zone-head">
+      ${folderIcon('var(--accent-light)')}
+      <span class="zname">${target.name}</span>
+      <span class="zcount">${placedItems.length}/${totalForTarget}</span>
+    </div>
+    <div class="zone-items">
+      ${placedItems.map(it => chipHTML(it)).join('')}
+    </div>
+  </div>`;
+}
+
+function attachSortHandlers(){
+  const chips = app.querySelectorAll('.item-chip[draggable="true"]');
+  chips.forEach(chip => {
+    chip.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', chip.dataset.id);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+  });
+
+  const zones = app.querySelectorAll('.zone');
+  zones.forEach(zone => {
+    zone.addEventListener('dragover', e => {
+      e.preventDefault();
+      zone.classList.add('dragover');
+    });
+    zone.addEventListener('dragleave', () => {
+      zone.classList.remove('dragover');
+    });
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('dragover');
+      const id = e.dataTransfer.getData('text/plain');
+      const item = state.sortItems.find(it => it.id === id);
+      if(!item) return;
+      if(item.target === zone.dataset.target){
+        item.placed = true;
+        renderSort();
+      } else {
+        zone.classList.add('reject');
+        setTimeout(() => zone.classList.remove('reject'), 300);
+      }
+    });
+  });
+
+  const tray = app.querySelector('#tray');
+  tray.addEventListener('dragover', e => e.preventDefault());
+  tray.addEventListener('drop', e => e.preventDefault());
+}
+
+/* ============ FIND-THE-FILE LOGIC ============ */
+function loadFindLevel(index){
+  state.findLevelIndex = index;
+  const level = findLevels[index];
+  state.findNavStack = [level.tree];
+  state.screen = 'find';
+  renderFind();
+}
+
+function renderFind(msg){
+  const idx = state.findLevelIndex;
+  const level = findLevels[idx];
+  const stack = state.findNavStack;
+  const current = stack[stack.length-1];
+
+  app.innerHTML = `
+    ${topbarHTML()}
+    ${progressHTML(idx+1, findLevels.length)}
+    <div class="mission">
+      ${infoIcon()}
+      <div class="mission-text">Finde diese Datei: <span class="mission-path">${level.pathDisplay}</span></div>
+    </div>
+    <div class="panel">
+      <div class="breadcrumbs" id="crumbs">
+        ${stack.map((node, i) => `
+          ${i>0 ? '<span class="crumb-sep">›</span>' : ''}
+          <button class="crumb ${i===stack.length-1 ? 'current':''}" data-nav="${i}">${node.name}</button>
+        `).join('')}
+      </div>
+      <div class="browser" id="browser">
+        ${current.children && current.children.length ? current.children.map((node, i) => fsItemHTML(node, i)).join('') : '<span class="tray-empty-msg">Dieser Ordner ist leer.</span>'}
+      </div>
+      <div class="wrong-msg" id="wrongMsg">${msg || ''}</div>
+      <div class="panel-actions">
+        <button class="btn btn-ghost" data-action="restart-find-level">Zurück zum Anfang</button>
+        <span></span>
+      </div>
+    </div>
+  `;
+  attachFindHandlers();
+}
+
+function fsItemHTML(node, i){
+  if(node.type === 'folder'){
+    return `<button class="fs-item folder" data-nav-into="${i}">${folderIcon('var(--accent)')}<span class="fname">${node.name}</span></button>`;
+  }
+  return `<button class="fs-item file" data-file="${i}">${fileIcon()}<span class="fname">${node.name}</span></button>`;
+}
+
+function attachFindHandlers(){
+  app.querySelectorAll('#crumbs .crumb').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = parseInt(btn.dataset.nav, 10);
+      state.findNavStack = state.findNavStack.slice(0, i+1);
+      renderFind();
+    });
+  });
+
+  const current = state.findNavStack[state.findNavStack.length-1];
+
+  app.querySelectorAll('#browser [data-nav-into]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = parseInt(btn.dataset.navInto, 10);
+      state.findNavStack.push(current.children[i]);
+      renderFind();
+    });
+  });
+
+  app.querySelectorAll('#browser [data-file]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = parseInt(btn.dataset.file, 10);
+      const node = current.children[i];
+      if(node.target){
+        onFindLevelComplete();
+      } else {
+        renderFind('Das ist nicht die richtige Datei. Schau dir den Pfad oben noch einmal genau an.');
+      }
+    });
+  });
+}
+
+function onFindLevelComplete(){
+  const idx = state.findLevelIndex;
+  const isLast = idx === findLevels.length - 1;
+  app.innerHTML = `
+    ${topbarHTML()}
+    <div class="panel level-complete-pop">
+      <div class="badge">${checkIcon()}</div>
+      <h2 style="margin:0 0 6px; color:var(--accent-dark);">Gefunden!</h2>
+      <p style="color:var(--ink-soft); margin:0 0 22px;">${isLast ? 'Das war das letzte Level.' : 'Weiter zum nächsten Level.'}</p>
+      <button class="btn btn-primary" data-action="${isLast ? 'find-finish' : 'find-next'}">${isLast ? 'Ergebnis ansehen' : 'Nächstes Level'}</button>
+    </div>
+  `;
+}
+
+/* ============ BAUM BAUEN LOGIC ============ */
+function loadBuildLevel(index){
+  state.buildLevelIndex = index;
+  state.buildItems = buildLevels[index];
+  state.buildPlacement = {};
+  state.buildItems.forEach(it => { state.buildPlacement[it.id] = 'unsorted'; });
+  state.buildTrayOrder = shuffle(state.buildItems.map(it => it.id));
+  state.buildChecked = false;
+  state.screen = 'build';
+  renderBuild();
+}
+
+function buildChipHTML(item){
+  const wrong = state.buildChecked ? ' wrong' : '';
+  const icon = item.type === 'folder' ? folderIcon('var(--gold)') : fileIcon();
+  return `<div class="item-chip${wrong}" draggable="true" data-id="${item.id}">${icon}<span>${item.name}</span></div>`;
+}
+
+function renderTreeChildren(parentId){
+  const children = state.buildItems.filter(it => state.buildPlacement[it.id] === parentId);
+  if(children.length === 0) return '';
+  return children.map(it => {
+    const wrong = state.buildChecked && state.buildPlacement[it.id] !== it.correctParent ? ' wrong' : '';
+    if(it.type === 'folder'){
+      return `<div class="tree-folder${wrong}" data-folder-id="${it.id}">
+        <div class="tree-folder-header" draggable="true" data-id="${it.id}">${folderIcon('var(--accent-light)')}<span>${it.name}</span></div>
+        <div class="tree-children">${renderTreeChildren(it.id)}</div>
+      </div>`;
+    }
+    return `<div class="tree-file${wrong}" draggable="true" data-id="${it.id}">${fileIcon()}<span>${it.name}</span></div>`;
+  }).join('');
+}
+
+function renderBuild(){
+  const idx = state.buildLevelIndex;
+  const total = state.buildItems.length;
+  const trayItems = state.buildTrayOrder
+    .map(id => state.buildItems.find(it => it.id === id))
+    .filter(it => state.buildPlacement[it.id] === 'unsorted');
+
+  let msgHTML = '';
+  if(state.buildChecked){
+    const wrong = state.buildItems.filter(it => state.buildPlacement[it.id] !== it.correctParent).length;
+    const correct = total - wrong;
+    msgHTML = `<div class="check-msg bad">${correct} von ${total} Elementen sind richtig einsortiert. Verschiebe die rot markierten Ordner und Dateien an die richtige Stelle.</div>`;
+  }
+
+  app.innerHTML = `
+    ${topbarHTML()}
+    ${progressHTML(idx+1, buildLevels.length)}
+    <div class="instruction">Ziehe Ordner und Dateien so unter „Mein PC“, dass eine sinnvolle Struktur entsteht. Ordner dürfen auch in andere Ordner.</div>
+    <div class="panel">
+      <div class="build-tray" id="buildTray">
+        ${trayItems.length ? trayItems.map(it => buildChipHTML(it)).join('') : '<span class="tray-empty-msg">Alle Elemente sind einsortiert.</span>'}
+      </div>
+      <div class="tree-area" id="treeArea">
+        <div class="root-box">${folderIcon('var(--accent)')}<span>Mein PC</span></div>
+        <div class="tree-children root-children">${renderTreeChildren('root')}</div>
+      </div>
+      ${msgHTML}
+      <div class="panel-actions">
+        <button class="btn btn-ghost" data-action="restart-build-level">Neu mischen</button>
+        <button class="btn btn-primary" data-action="check-build">Überprüfen</button>
+      </div>
+    </div>
+  `;
+  attachBuildHandlers();
+}
+
+function isNestedInside(itemId, possibleAncestorId){
+  if(itemId === 'root') return false;
+  let cur = itemId;
+  let guard = 0;
+  while(cur !== 'root' && cur !== undefined && guard < 200){
+    if(cur === possibleAncestorId) return true;
+    cur = state.buildPlacement[cur];
+    guard++;
+  }
+  return false;
+}
+
+function moveBuildItem(draggedId, targetId){
+  if(!draggedId) return;
+  if(draggedId === targetId) return;
+  if(isNestedInside(targetId, draggedId)) return; // would create a loop
+  state.buildPlacement[draggedId] = targetId;
+  state.buildChecked = false;
+  renderBuild();
+}
+
+function attachBuildHandlers(){
+  app.querySelectorAll('#buildTray [draggable="true"], #treeArea [draggable="true"]').forEach(el => {
+    el.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', el.dataset.id);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+  });
+
+  const tray = app.querySelector('#buildTray');
+  tray.addEventListener('dragover', e => { e.preventDefault(); tray.classList.add('dragover'); });
+  tray.addEventListener('dragleave', () => tray.classList.remove('dragover'));
+  tray.addEventListener('drop', e => {
+    e.preventDefault();
+    tray.classList.remove('dragover');
+    const draggedId = e.dataTransfer.getData('text/plain');
+    moveBuildItem(draggedId, 'unsorted');
+  });
+
+  const treeArea = app.querySelector('#treeArea');
+  treeArea.addEventListener('dragover', e => {
+    e.preventDefault();
+    app.querySelectorAll('.tree-folder.dragover').forEach(f => f.classList.remove('dragover'));
+    const hovered = e.target.closest('[data-folder-id]');
+    if(hovered) hovered.classList.add('dragover');
+  });
+  treeArea.addEventListener('drop', e => {
+    e.preventDefault();
+    app.querySelectorAll('.tree-folder.dragover').forEach(f => f.classList.remove('dragover'));
+    const draggedId = e.dataTransfer.getData('text/plain');
+    const hoveredFolder = e.target.closest('[data-folder-id]');
+    const targetId = hoveredFolder ? hoveredFolder.dataset.folderId : 'root';
+    moveBuildItem(draggedId, targetId);
+  });
+}
+
+function handleCheckBuild(){
+  const wrongItems = state.buildItems.filter(it => state.buildPlacement[it.id] !== it.correctParent);
+  if(wrongItems.length === 0){
+    onBuildLevelComplete();
+  } else {
+    state.buildChecked = true;
+    renderBuild();
+  }
+}
+
+function onBuildLevelComplete(){
+  const idx = state.buildLevelIndex;
+  const isLast = idx === buildLevels.length - 1;
+  app.innerHTML = `
+    ${topbarHTML()}
+    <div class="panel level-complete-pop">
+      <div class="badge">${checkIcon()}</div>
+      <h2 style="margin:0 0 6px; color:var(--accent-dark);">Super einsortiert!</h2>
+      <p style="color:var(--ink-soft); margin:0 0 22px;">${isLast ? 'Das war das letzte Level.' : 'Weiter zum nächsten Level.'}</p>
+      <button class="btn btn-primary" data-action="${isLast ? 'build-finish' : 'build-next'}">${isLast ? 'Ergebnis ansehen' : 'Nächstes Level'}</button>
+    </div>
+  `;
+}
+
+function renderBuildWin(){
+  app.innerHTML = `
+    ${topbarHTML()}
+    <div class="panel win-screen">
+      <div class="badge">${checkIcon()}</div>
+      <h2>Alle Ordnerbäume gebaut!</h2>
+      <p>Du hast alle ${buildLevels.length} Level von „Ordner-Baum bauen“ geschafft.</p>
+      <button class="btn btn-primary" data-action="menu">Zum Hauptmenü</button>
+    </div>
+  `;
+}
+
+/* ============ WIN SCREENS ============ */
+function renderSortWin(){
+  app.innerHTML = `
+    ${topbarHTML()}
+    <div class="panel win-screen">
+      <div class="badge">${checkIcon()}</div>
+      <h2>Alle Ordner sind sortiert!</h2>
+      <p>Du hast alle 5 Level von „Ordner sortieren“ geschafft.</p>
+      <button class="btn btn-primary" data-action="menu">Zum Hauptmenü</button>
+    </div>
+  `;
+}
+
+function renderFindWin(){
+  app.innerHTML = `
+    ${topbarHTML()}
+    <div class="panel win-screen">
+      <div class="badge">${checkIcon()}</div>
+      <h2>Alle Dateien gefunden!</h2>
+      <p>Du hast alle 10 Level von „Datei finden“ geschafft.</p>
+      <button class="btn btn-primary" data-action="menu">Zum Hauptmenü</button>
+    </div>
+  `;
+}
+
+/* ============ GLOBAL CLICK ROUTER ============ */
+app.addEventListener('click', e => {
+  const el = e.target.closest('[data-action]');
+  if(!el) return;
+  const action = el.dataset.action;
+
+  if(action === 'menu'){ state.screen = 'start'; renderStart(); }
+  else if(action === 'start-sort'){ loadSortLevel(0); }
+  else if(action === 'start-find'){ loadFindLevel(0); }
+  else if(action === 'restart-sort-level'){ loadSortLevel(state.sortLevelIndex); }
+  else if(action === 'restart-find-level'){ loadFindLevel(state.findLevelIndex); }
+  else if(action === 'submit-sort'){
+    if(state.sortLevelIndex === sortLevels.length - 1){ state.screen='sortWin'; renderSortWin(); }
+    else { loadSortLevel(state.sortLevelIndex + 1); }
+  }
+  else if(action === 'find-next'){ loadFindLevel(state.findLevelIndex + 1); }
+  else if(action === 'find-finish'){ state.screen='findWin'; renderFindWin(); }
+  else if(action === 'start-build'){ loadBuildLevel(0); }
+  else if(action === 'restart-build-level'){ loadBuildLevel(state.buildLevelIndex); }
+  else if(action === 'check-build'){ handleCheckBuild(); }
+  else if(action === 'build-next'){ loadBuildLevel(state.buildLevelIndex + 1); }
+  else if(action === 'build-finish'){ state.screen='buildWin'; renderBuildWin(); }
+});
+
+/* ============ INIT ============ */
+renderStart();
+</script>
+</body>
+</html>
