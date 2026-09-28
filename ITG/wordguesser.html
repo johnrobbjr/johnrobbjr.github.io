@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Informatik Worträtsel</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #0f172a;
+        color: #f8fafc;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px;
+      }
+      .container {
+        background: #1e293b;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        max-width: 750px;
+        width: 100%;
+      }
+      h1 {
+        color: #38bdf8;
+        margin-top: 0;
+        font-size: 2rem;
+      }
+
+      .mode-selector {
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+      }
+      .mode-btn {
+        background: #475569;
+        color: white;
+        font-size: 0.9rem;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .mode-btn.active {
+        background: #38bdf8;
+        color: #0f172a;
+        font-weight: bold;
+      }
+
+      .teacher-panel {
+        background: #334155;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: none;
+      }
+      .teacher-panel input {
+        padding: 10px;
+        font-size: 1rem;
+        border-radius: 6px;
+        border: 2px solid #475569;
+        background: #0f172a;
+        color: white;
+        text-transform: uppercase;
+        width: 60%;
+        margin-right: 10px;
+      }
+
+      .score-board {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 25px;
+        font-weight: bold;
+        font-size: 1.4rem;
+      }
+      .team-a {
+        color: #f43f5e;
+      }
+      .team-b {
+        color: #10b981;
+      }
+
+      .message {
+        height: 30px;
+        color: #fbbf24;
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+      }
+
+      .word-display {
+        font-size: 3rem;
+        letter-spacing: 12px;
+        margin: 30px 0;
+        font-family: monospace;
+        min-height: 60px;
+        text-transform: uppercase;
+      }
+
+      .keyboard {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 25px;
+        max-width: 650px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .keyboard-row {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+      }
+
+      button {
+        background: #334155;
+        color: white;
+        border: none;
+        padding: 12px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        border-radius: 6px;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          transform 0.1s;
+      }
+      button:hover:not(:disabled) {
+        background: #475569;
+      }
+      button:active:not(:disabled) {
+        transform: scale(0.95);
+      }
+      button:disabled {
+        opacity: 0.25;
+        cursor: not-allowed;
+      }
+
+      .keyboard button {
+        width: 45px;
+        height: 45px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .control-btn {
+        background: #e2e8f0;
+        color: #0f172a;
+        padding: 12px 24px;
+        font-size: 1.1rem;
+        margin-top: 10px;
+        border-radius: 6px;
+      }
+      .control-btn:hover {
+        background: #ffffff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>💻 Informatik Worträtsel</h1>
+
+      <div class="mode-selector">
+        <button class="mode-btn active" id="btnAuto" onclick="setMode('auto')">
+          Zufallswort
+        </button>
+        <button class="mode-btn" id="btnManual" onclick="setMode('manual')">
+          Lehrer-Modus 🔒
+        </button>
+      </div>
+
+      <div class="teacher-panel" id="teacherPanel">
+        <input
+          type="password"
+          id="customWordInput"
+          placeholder="Geheimes Wort eingeben..."
+          onkeydown="if (event.key === 'Enter') applyCustomWord();"
+        />
+        <button onclick="applyCustomWord()" style="background: #10b981">
+          Wort starten
+        </button>
+      </div>
+
+      <div class="score-board">
+        <div class="team-a">Team A: <span id="scoreA">0</span></div>
+        <div class="team-b">Team B: <span id="scoreB">0</span></div>
+      </div>
+
+      <div class="message" id="turnMessage">Team A ist an der Reihe!</div>
+
+      <div class="word-display" id="wordDisplay">_ _ _ _ _</div>
+
+      <div class="keyboard" id="keyboard"></div>
+
+      <button class="control-btn" id="resetBtn" onclick="nextRound()">
+        Nächstes Wort / Reset
+      </button>
+    </div>
+
+    <script>
+      const words = [
+        "HANDY",
+        "COMPUTER",
+        "TASTATUR",
+        "LAPTOP",
+        "INFORMATIK",
+        "MAUS",
+        "BILDSCHIRM",
+        "INTERNET",
+        "WEBSITE",
+        "PASSWORT",
+        "DRUCKER",
+        "KABEL",
+        "SOFTWARE",
+        "ORDNER",
+        "SPEICHERN",
+        "ROUTER",
+        "GOOGLE",
+        "SPIEL",
+        "EMAIL",
+        "PROGRAMM",
+        "COMPUTERRAUM",
+      ];
+
+      const qwertzLayout = [
+        ["Q", "W", "E", "R", "T", "Z", "U", "I", "O", "P", "Ü"],
+        ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ö", "Ä"],
+        ["Y", "X", "C", "V", "B", "N", "M"],
+      ];
+
+      let currentWord = "";
+      let guessedLetters = [];
+      let scoreA = 0;
+      let scoreB = 0;
+      let isTeamATurn = true;
+      let gameMode = "auto";
+
+      function initGame() {
+        guessedLetters = [];
+
+        if (gameMode === "auto") {
+          currentWord = words[Math.floor(Math.random() * words.length)];
+          document.getElementById("teacherPanel").style.display = "none";
+        } else {
+          currentWord = "";
+          document.getElementById("teacherPanel").style.display = "block";
+          document.getElementById("customWordInput").value = "";
+          document.getElementById("customWordInput").focus();
+        }
+
+        updateDisplay();
+        createKeyboard();
+        updateTurnMessage();
+      }
+
+      function setMode(mode) {
+        gameMode = mode;
+        document
+          .getElementById("btnAuto")
+          .classList.toggle("active", mode === "auto");
+        document
+          .getElementById("btnManual")
+          .classList.toggle("active", mode === "manual");
+        initGame();
+      }
+
+      function applyCustomWord() {
+        let inputVal = document
+          .getElementById("customWordInput")
+          .value.trim()
+          .toUpperCase();
+        inputVal = inputVal.replace(/[^A-ZÄÖÜ]/g, "");
+
+        if (inputVal.length < 2) {
+          alert(
+            "Bitte ein gültiges Wort mit mindestens 2 Buchstaben eingeben!",
+          );
+          return;
+        }
+
+        currentWord = inputVal;
+        document.getElementById("customWordInput").value = "";
+        updateDisplay();
+        createKeyboard();
+        document.getElementById("turnMessage").innerText =
+          "Das geheime Wort wurde gesetzt! Spiel startet...";
+        setTimeout(updateTurnMessage, 1500);
+      }
+
+      function createKeyboard() {
+        const keyboardContainer = document.getElementById("keyboard");
+        keyboardContainer.innerHTML = "";
+
+        qwertzLayout.forEach((row) => {
+          const rowDiv = document.createElement("div");
+          rowDiv.className = "keyboard-row";
+
+          row.forEach((letter) => {
+            const btn = document.createElement("button");
+            btn.innerText = letter;
+            btn.id = "key-" + letter;
+            btn.onclick = () => guess(letter);
+            if (currentWord === "") btn.disabled = true;
+            rowDiv.appendChild(btn);
+          });
+
+          keyboardContainer.appendChild(rowDiv);
+        });
+      }
+
+      function guess(letter) {
+        if (!currentWord) return;
+
+        const button = document.getElementById("key-" + letter);
+        if (button) button.disabled = true;
+
+        guessedLetters.push(letter);
+
+        if (currentWord.includes(letter)) {
+          updateDisplay();
+          checkWin();
+        } else {
+          isTeamATurn = !isTeamATurn;
+          updateTurnMessage();
+        }
+      }
+
+      function updateDisplay() {
+        if (currentWord === "") {
+          document.getElementById("wordDisplay").innerText = "🔒 ???";
+          return;
+        }
+
+        const display = currentWord
+          .split("")
+          .map((letter) => (guessedLetters.includes(letter) ? letter : "_"))
+          .join(" ");
+        document.getElementById("wordDisplay").innerText = display;
+      }
+
+      function updateTurnMessage() {
+        if (currentWord === "") {
+          document.getElementById("turnMessage").innerText =
+            "Warten auf Worteingabe des Lehrers...";
+          document.getElementById("turnMessage").style.color = "#fbbf24";
+          return;
+        }
+
+        const msgElement = document.getElementById("turnMessage");
+        if (isTeamATurn) {
+          msgElement.innerText = "Team A ist an der Reihe!";
+          msgElement.style.color = "#f43f5e";
+        } else {
+          msgElement.innerText = "Team B ist an der Reihe!";
+          msgElement.style.color = "#10b981";
+        }
+      }
+
+      function checkWin() {
+        const isWon = currentWord
+          .split("")
+          .every((letter) => guessedLetters.includes(letter));
+        if (isWon) {
+          if (isTeamATurn) {
+            scoreA++;
+            document.getElementById("scoreA").innerText = scoreA;
+            document.getElementById("turnMessage").innerText =
+              "🎉 Team A gewinnt diese Runde!";
+          } else {
+            scoreB++;
+            document.getElementById("scoreB").innerText = scoreB;
+            document.getElementById("turnMessage").innerText =
+              "🎉 Team B gewinnt diese Runde!";
+          }
+          disableKeyboard();
+        }
+      }
+
+      function disableKeyboard() {
+        const buttons = document.querySelectorAll(".keyboard button");
+        buttons.forEach((btn) => (btn.disabled = true));
+      }
+
+      function nextRound() {
+        initGame();
+      }
+
+      initGame();
+    </script>
+  </body>
+</html>
