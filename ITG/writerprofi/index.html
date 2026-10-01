@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Writer-Grundkurs</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-icon">📝</div>
+          <div>
+            <h1>Writer-Grundkurs</h1>
+            <p>Lerne die Grundlagen eines Schreibprogramms</p>
+          </div>
+        </div>
+
+        <button id="homeButton" class="ghost-button hidden">
+          Zur Übersicht
+        </button>
+      </header>
+
+      <main id="mapScreen" class="screen">
+        <section class="intro-card">
+          <h2>Wähle eine Lektion</h2>
+          <p>
+            In diesem Kurs lernst du wichtige Grundlagen von LibreOffice Writer:
+            markieren, kopieren, ausschneiden, einfügen, speichern, rückgängig
+            machen, Tastenkürzel und Textgestaltung.
+          </p>
+        </section>
+
+        <section id="lessonGrid" class="lesson-grid"></section>
+      </main>
+
+      <main id="lessonScreen" class="screen hidden">
+        <section class="lesson-header-card">
+          <div>
+            <div class="small-label">Aktuelle Lektion</div>
+            <h2 id="lessonTitle"></h2>
+          </div>
+
+          <div class="progress-wrap">
+            <div class="progress-label">
+              <span id="challengeLabel"></span>
+              <span id="progressPercent"></span>
+            </div>
+            <div class="progress-track">
+              <div id="progressFill" class="progress-fill"></div>
+            </div>
+          </div>
+        </section>
+
+        <div class="lesson-layout">
+          <aside class="task-panel">
+            <div class="small-label">Aufgabe</div>
+            <h3 id="challengeTitle"></h3>
+
+            <div id="difficultyBadge" class="difficulty-badge"></div>
+
+            <div id="instructionBox" class="instruction-box"></div>
+            <div id="hintBox" class="hint-box"></div>
+
+            <div id="feedback" class="feedback hidden"></div>
+
+            <div class="task-actions">
+              <button id="mainActionButton" class="primary-button">
+                Überprüfen
+              </button>
+              <button id="retryButton" class="secondary-button">
+                Nochmal versuchen
+              </button>
+            </div>
+          </aside>
+
+          <section class="writer-panel">
+            <div class="writer-window">
+              <div class="writer-titlebar">
+                <div class="window-dots">
+                  <span class="dot red"></span>
+                  <span class="dot yellow"></span>
+                  <span class="dot green"></span>
+                </div>
+                <div class="writer-title">
+                  LibreOffice Writer – Übungssimulation
+                </div>
+                <div></div>
+              </div>
+
+              <div id="menubar" class="menubar"></div>
+
+              <div id="toolbar" class="toolbar">
+                <button
+                  class="tool-button"
+                  data-action="save"
+                  title="Speichern"
+                >
+                  💾 Speichern
+                </button>
+                <button
+                  class="tool-button"
+                  data-action="undo"
+                  title="Rückgängig"
+                >
+                  ↩ Rückgängig
+                </button>
+
+                <span class="toolbar-divider"></span>
+
+                <button
+                  class="tool-button"
+                  data-action="cut"
+                  title="Ausschneiden"
+                >
+                  ✂ Ausschneiden
+                </button>
+                <button class="tool-button" data-action="copy" title="Kopieren">
+                  📋 Kopieren
+                </button>
+                <button
+                  class="tool-button"
+                  data-action="paste"
+                  title="Einfügen"
+                >
+                  📌 Einfügen
+                </button>
+
+                <span class="toolbar-divider"></span>
+
+                <button
+                  class="tool-button format-button"
+                  data-command="bold"
+                  title="Fett"
+                >
+                  <b>F</b>
+                </button>
+                <button
+                  class="tool-button format-button"
+                  data-command="italic"
+                  title="Kursiv"
+                >
+                  <i>K</i>
+                </button>
+                <button
+                  class="tool-button format-button"
+                  data-command="underline"
+                  title="Unterstrichen"
+                >
+                  <u>U</u>
+                </button>
+                <button
+                  class="tool-button format-button"
+                  data-command="strikeThrough"
+                  title="Durchstreichen"
+                >
+                  <s>S</s>
+                </button>
+
+                <span class="toolbar-divider"></span>
+
+                <label class="select-label">
+                  Größe
+                  <select id="fontSizeSelect" class="tool-select">
+                    <option value="">--</option>
+                    <option value="12px">12</option>
+                    <option value="16px">16</option>
+                    <option value="24px">24</option>
+                    <option value="32px">32</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="shortcut-help">
+                Tastenkürzel: <strong>Strg+C</strong> kopieren,
+                <strong>Strg+X</strong> ausschneiden,
+                <strong>Strg+V</strong> einfügen,
+                <strong>Strg+Z</strong> rückgängig,
+                <strong>Strg+S</strong> speichern
+              </div>
+
+              <div class="page-area">
+                <div class="page">
+                  <div
+                    id="editor"
+                    contenteditable="true"
+                    spellcheck="false"
+                  ></div>
+                </div>
+              </div>
+
+              <div class="statusbar">
+                <span id="statusLeft">Bereit</span>
+                <span>Keine dauerhafte Speicherung</span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
